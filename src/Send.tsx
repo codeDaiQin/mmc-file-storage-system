@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import size2str from '@/utils/size2str'
-import { Button, Upload, Modal, List, Tag, Space } from 'antd'
+import { Button, Upload, Modal, List, Tag, Space, Progress } from 'antd'
+import worker_script from '@/utils/worker'
 
 const Send: React.FC = () => {
   const [files, setFiles] = useState<File[]>([])
   const [active, setActive] = useState(0)
+  const [percent, setPercent] = useState(0)
 
   const delay = (ms: number = 1000) =>
     new Promise<void>((resolve) => {
@@ -22,7 +24,7 @@ const Send: React.FC = () => {
 
   // 上传文件之前的钩子
   const beforeUpload = async (_: any, fileList: File[]) => {
-    await delay(1000)
+    // await delay(1000)
     console.log(fileList)
     console.log('==== beforeUpload ====')
 
@@ -31,8 +33,24 @@ const Send: React.FC = () => {
   }
 
   // 上传文件的钩子
-  const handSubmit = () => {
+  const handSubmit = async () => {
     console.log('==== handSubmit ====')
+    let success = 0
+    files.forEach((file) => {
+      // 为每个文件创建 webwork 
+      const wokrer = new Worker(worker_script)
+      wokrer.postMessage(file)
+
+      // 监听进度
+      wokrer.onmessage = (e) => {
+        console.log(e.data);
+        if(++ success === files.length) {
+          console.log('全部上传完成');
+          setActive(3)
+        } 
+        setPercent(files.length / success)
+      }
+    })
   }
 
   //
@@ -50,25 +68,46 @@ const Send: React.FC = () => {
       </Upload>
       {active === 1 && (
         <Modal
-          title="Basic Modal"
+          title="已选择的文件"
+          visible={true}
+          onCancel={() => setActive(0)}
+          onOk={() => {
+            handSubmit()
+            setActive(2)
+          }}
+        >
+          <List
+            dataSource={files}
+            renderItem={(item, index) => (
+              <List.Item>
+                <Space>
+                  {item.name}
+                  <Tag color="green">{size2str(item.size)}</Tag>
+                </Space>
+              </List.Item>
+            )}
+          />
+        </Modal>
+      )}
+      {active === 2 && (
+        <Modal
+          title="上传中"
           visible={true}
           onCancel={() => setActive(0)}
           onOk={handleOk}
         >
-          <List
-            dataSource={files}
-            renderItem={(item, index) => {
-              console.log(item)
-              return (
-                <List.Item>
-                  <Space>
-                    {item.name}
-                    <Tag color="green">{size2str(item.size)}</Tag>
-                  </Space>
-                </List.Item>
-              )
-            }}
-          />
+          <Progress percent={percent} status="active" />
+        </Modal>
+      )}
+       {active === 3 && (
+        <Modal
+          title="上传完成"
+          visible={true}
+          onCancel={() => setActive(0)}
+          onOk={() => setActive(0)}
+        >
+          上传完成
+          你的🐎是： 123458
         </Modal>
       )}
     </div>
