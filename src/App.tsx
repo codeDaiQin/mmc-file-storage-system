@@ -8,7 +8,9 @@ const App: React.FC = () => {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>mmc-file-storage-system</p>
+        <a href="https://github.com/codeDaiQin/mmc-file-storage-system">
+          react go 分布式文件存储服务
+        </a>
         <p>By: 毛毛虫&可乐加冰</p>
         <Send />
       </header>
