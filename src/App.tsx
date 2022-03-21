@@ -1,5 +1,5 @@
 import React from 'react'
-import Send from './Send'
+import Send from '@/components/Send'
 
 const App: React.FC = () => {
   return (

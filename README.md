@@ -23,3 +23,8 @@ $ pnpm run dev
 * [ ] 任务队列
 * [ ] 微服务化(API网关, 服务注册, RPC通讯)
 * [ ] CI/CD(持续集成)
+
+## 相关文档
+
++ [上传速度和时间](https://blog.csdn.net/qq_42628989/article/details/109161488)
++ [分片上传 - 掘金](https://juejin.cn/post/7071877982574346277#heading-1)
