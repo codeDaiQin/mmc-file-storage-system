@@ -1,63 +1,76 @@
 const workercode = () => {
-  const requestList = []
-
-  const delay = (ms: number = 1000) =>
-    new Promise<void>((resolve) => {
-      setTimeout(() => {
-        resolve()
-      }, ms)
-    })
 
   // 文件切片
-  const sliceFile = (file: File, size: number = 1024 * 1024) => {
-    // Blob对象slice方法对二进制文件进行拆分
-    console.log(file, 'sliceFile => 对文件进行切片')
-    const fileChunkList: Blob[] = [file]
-    // let count = 0
-    // while (count < file.size) {
-    //   fileChunkList.push(file.slice(count, count + size))
-    //   count += size
-    // }
-    // console.log(fileChunkList)
+  const sliceFile = (file: File) => {
+    const { size } = file
+    const chunk_size = 1024 * 1024 * 2
+    const total_chunks = Math.ceil(size / chunk_size)
+    const file_chunks: Blob[] = []
 
-    return fileChunkList
+    if (size > chunk_size) {
+      for (let i = 0; i < total_chunks; i++) {
+        let start = i * chunk_size
+        let end = (i + 1) * chunk_size
+        let chunk = file.slice(start, end)
+        file_chunks.push(chunk)
+      }
+    } else {
+      file_chunks.push(file)
+    }
+    return file_chunks
   }
 
   // 文件上传
-  const handSubmit = (price: Blob) => {
-    const formData = new FormData()
-    formData.append('filename', price)
-
+  const handSubmit = (price: Blob, index: number, hash: string) => {
     return new Promise<void>((resolve, reject) => {
-      try {
-        delay(2000).then(() => {
-          console.log('upload')
-          resolve()
-        })
-      } catch (error) {
+      const formData = new FormData()
+      // 由于是并发，传输到服务端的顺序可能会发生变化，所以我们还需要给每个切片记录顺序
+      formData.append('price', price)
+      formData.append('hash', hash)
+      formData.append('index', `${index}`)
+      const xhr = new XMLHttpRequest()
+      xhr.open('post', 'https://mmszb.cn/api/test')
+      // xhr.setRequestHeader('content-type', 'multipart/form-data')
+
+      // xhr.setRequestHeader('content-type', 'application/json')
+
+      xhr.send(formData)
+      // 监听进度
+      // xhr.onprogress = (e) => console.log(e, '进度')
+
+      xhr.onload = (e) => {
+        resolve()
+      }
+
+      xhr.onerror = (e) => {
+        console.log(e)
         reject()
       }
     })
   }
 
   // 文件合并
-  const merge = () => {}
+  const merge = (len: number, hash: string) => {}
 
   self.onmessage = (e) => {
     console.log('收到消息', e)
-
     // 分片文件
-    const totalPrice = sliceFile(e.data)
+    const totalPrice = sliceFile(e.data.originFileObj)
+    const hash = e.data.uid
+    console.dir('sliceFile => 对文件进行切片', totalPrice)
 
-    Promise.all(totalPrice.map((price) => handSubmit(price)))
+    Promise.all(
+      totalPrice.map((price, index) => handSubmit(price, index, hash))
+    )
       .then(() => {
         // 全部请求完成 关闭自身
-        merge()
+        merge(totalPrice.length, hash)
         self.postMessage('请求完成')
         self.close()
       })
-      .catch(() => {
+      .catch((e) => {
         // 重试错误的请求
+        console.log(e)
       })
   }
 }

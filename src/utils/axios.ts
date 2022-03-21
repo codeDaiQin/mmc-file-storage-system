@@ -3,15 +3,14 @@ import { message } from "antd";
 
 const MODE = import.meta.env.MODE
 // 设置基础路径
-axios.defaults.baseURL = MODE == 'development' ? '' : 'http://staineds.com:7001'
+axios.defaults.baseURL = MODE == 'development' ? '' : ''
 // 
 axios.defaults.withCredentials = true
 // 配置请求头
-axios.defaults.headers['Accept-Encoding'] = 'gzip'
-axios.defaults.headers['X-Requested-With'] = 'XMLHttpRequest'
-axios.defaults.headers['Authorization'] = `${localStorage.getItem('token') || null}`
+// axios.defaults.headers.post["token"]= `${localStorage.getItem('token') || null}`
+
 axios.defaults.headers.post['Content-Type'] = 'application/json'
-axios.interceptors.response.use(res => {
+axios.interceptors.response.use((res:any) => {
   if (typeof res.data !== 'object') {
     message.error('服务端异常')
     return Promise.reject(res)
