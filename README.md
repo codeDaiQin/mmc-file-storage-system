@@ -30,8 +30,10 @@ $ pnpm run dev
 ## 相关文档
 
 + [上传速度和时间](https://blog.csdn.net/qq_42628989/article/details/109161488)
-+ [分片上传 - 掘金](https://juejin.cn/post/7071877982574346277#heading-1)
++ [分片上传 - 掘金](https://juejin.cn/post/7071877982574346277)
 + [大文件切片上传 - 掘金](https://juejin.cn/post/6921513919299354632)
-+ [断点续传 - 掘金](https://juejin.cn/post/6844904046436843527#heading-0)
-+ [手摸手文件 - 掘金](https://juejin.cn/post/7025885508748181512#heading-3)
-+ [组件 - 掘金](https://juejin.cn/post/6850037258863673357#heading-4)
++ [断点续传 - 掘金](https://juejin.cn/post/6844904046436843527)
++ [手摸手文件 - 掘金](https://juejin.cn/post/7025885508748181512)
++ [组件 - 掘金](https://juejin.cn/post/6850037258863673357)
++ [处理多文件并行传输 - 简书](https://www.jianshu.com/p/1708a6f4037d)
++ [大圣 - 文件上传](https://juejin.cn/post/6844904055819468808)
