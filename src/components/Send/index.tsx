@@ -11,7 +11,6 @@ import {
   Row,
   Col,
   InputNumber,
-  Divider,
 } from 'antd'
 import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
@@ -21,6 +20,7 @@ const Send: React.FC = () => {
   const [files, setFiles] = useState<File[]>([])
   const [active, setActive] = useState(0)
   const [percent, setPercent] = useState(0)
+  const [code, setCode] = useState('')
 
   // 文件改变时的回调
   const handleChange = (info: any) => {
@@ -49,15 +49,16 @@ const Send: React.FC = () => {
 
       // 监听进度
       wokrer.onmessage = (e) => {
-        console.log(e.data)
         if (++success === files.length) {
           console.log('全部上传完成')
+          // 全部上传完成 生成 唯一 接收码
+          setCode('213415')
           setActive(3)
         }
         setPercent(files.length / success)
       }
     })
-    setActive(3)
+    // setActive(3)
   }
 
   return (
@@ -126,7 +127,7 @@ const Send: React.FC = () => {
           onCancel={() => setActive(0)}
           onOk={() => setActive(0)}
         >
-          上传完成 你的🐎是： 123458
+          上传完成 你的🐎是： {code}
         </Modal>
       )}
     </div>

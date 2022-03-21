@@ -1,5 +1,4 @@
 const workercode = () => {
-
   // 文件切片
   const sliceFile = (file: File) => {
     const { size } = file
@@ -22,35 +21,25 @@ const workercode = () => {
 
   // 文件上传
   const handSubmit = (price: Blob, index: number, hash: string) => {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const formData = new FormData()
       // 由于是并发，传输到服务端的顺序可能会发生变化，所以我们还需要给每个切片记录顺序
       formData.append('price', price)
       formData.append('hash', hash)
       formData.append('index', `${index}`)
-      const xhr = new XMLHttpRequest()
-      xhr.open('post', 'https://mmszb.cn/api/test')
-      // xhr.setRequestHeader('content-type', 'multipart/form-data')
 
-      // xhr.setRequestHeader('content-type', 'application/json')
-
-      xhr.send(formData)
-      // 监听进度
-      // xhr.onprogress = (e) => console.log(e, '进度')
-
-      xhr.onload = (e) => {
-        resolve()
-      }
-
-      xhr.onerror = (e) => {
-        console.log(e)
-        reject()
+      if (index % 2 === 0) {
+        resolve(index)
+      } else {
+        reject(index)
       }
     })
   }
 
   // 文件合并
-  const merge = (len: number, hash: string) => {}
+  const merge = (len: number, hash: string) => {
+    console.log(len, 'marge')
+  }
 
   self.onmessage = (e) => {
     console.log('收到消息', e)
@@ -68,10 +57,12 @@ const workercode = () => {
         self.postMessage('请求完成')
         self.close()
       })
-      .catch((e) => {
-        // 重试错误的请求
-        console.log(e)
+      .catch((i) => {
+        
       })
+    // 重试错误的请求
+    //   console.log(e)
+    // })
   }
 }
 

@@ -31,3 +31,7 @@ $ pnpm run dev
 
 + [上传速度和时间](https://blog.csdn.net/qq_42628989/article/details/109161488)
 + [分片上传 - 掘金](https://juejin.cn/post/7071877982574346277#heading-1)
++ [大文件切片上传 - 掘金](https://juejin.cn/post/6921513919299354632)
++ [断点续传 - 掘金](https://juejin.cn/post/6844904046436843527#heading-0)
++ [手摸手文件 - 掘金](https://juejin.cn/post/7025885508748181512#heading-3)
++ [组件 - 掘金](https://juejin.cn/post/6850037258863673357#heading-4)
