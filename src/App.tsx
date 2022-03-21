@@ -1,4 +1,5 @@
 import React from 'react'
+import Receive from './container/receive'
 import Send from '@/components/Send'
 import logo from '../public/logo.svg'
 import './App.css'
@@ -13,6 +14,7 @@ const App: React.FC = () => {
         </a>
         <p>By: 毛毛虫&可乐加冰</p>
         <Send />
+        <Receive></Receive>
       </header>
     </div>
   )

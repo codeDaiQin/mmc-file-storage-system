@@ -8,12 +8,14 @@
   },
   "dependencies": {
     "antd": "^4.19.2",
+    "axios": "^0.26.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "^5.0.0",
     "tdesign-react": "^0.28.0"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/node": "^17.0.21",
     "@types/react": "^17.0.33",
     "@types/react-dom": "^17.0.10",
