@@ -1,0 +1,14 @@
+<script>
+  const arr = []
+
+  arr.forEach((item) => {
+    item.onmessage = () => {
+      // ...
+    }
+  })
+  
+  const handleMessage = () => {}
+  arr.forEach((item) => {
+    item.onmessage = handleMessage
+  })
+</script>

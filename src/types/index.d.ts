@@ -12,6 +12,10 @@ declare namespace TSResponse {
     list: Array<ReceiveList>
   }
 
+  interface MergeResponse {
+    result: string
+  }
+
   export interface Response {
     code: number
     message: string

@@ -8,11 +8,10 @@
   },
   "dependencies": {
     "antd": "^4.19.2",
-    "axios": "^0.26.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "^5.0.0",
-    "tdesign-react": "^0.28.0"
+    "umi-request": "^1.4.0"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

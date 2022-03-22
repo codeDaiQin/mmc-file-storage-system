@@ -15,12 +15,7 @@ import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
 import Dialog from '../Dialog'
 import type { MessageType } from '@/utils/worker'
-import request from '@/utils/axios'
-
-interface ParamsType {
-  count: number
-  time: number
-}
+import { merge } from '@/services/file'
 
 const Send: React.FC = () => {
   const [form] = Form.useForm()
@@ -40,51 +35,50 @@ const Send: React.FC = () => {
   const beforeUpload = async (_: any, fileList: File[]) => {
     console.log(fileList)
     console.log('==== beforeUpload ====')
-
     // 返回 false 停止上传 手动触发上传
     return false
   }
 
-  // 监听 worker 回调
-  const handleMessage = (e: { data: MessageType }) => {
-    const { data, eventType } = e.data
-    // 成功上传的文件数量
-    let success = 0
-
-    switch (eventType) {
-      case 'init':
-        console.log('初始化 分片、计算MD5')
-        break
-      case 'start':
-        console.log('开始上传')
-        break
-      case 'error':
-        console.log('失败')
-        break
-      case 'update':
-        console.log('更新进度条')
-        setPercent(data)
-        break
-      case 'finish':
-        console.log(data, '上传完成')
-        if (++success === files.length) {
-          request.post('/api/test', {
-            message: '全部上传完成',
-          })
-          console.log('全部上传完成')
-        }
-        break
-    }
-  }
-
   // 上传文件的钩子
   const handleSubmit = async () => {
-    console.log('==== handSubmit ====')
+    // 成功上传数量
+    let success = 0
+    const handleMessage = (e: { data: MessageType }) => {
+      const { data, eventType } = e.data
+
+      switch (eventType) {
+        case 'init':
+          console.log('初始化 分片、计算MD5')
+          break
+        case 'start':
+          console.log('开始上传')
+          break
+        case 'error':
+          console.log('失败')
+          break
+        case 'update':
+          console.log('更新进度条')
+          setPercent(data)
+          break
+        case 'finish':
+          console.log(success, data, '上传完成')
+
+          if (++success === files.length) {
+            console.log('全部上传完成')
+            merge(data).then((res) => {
+              setCode(res.result)
+              setActive(3)
+            })
+          }
+          break
+      }
+    }
     files.forEach((file) => {
       // 为每个文件创建 webwork
       const wokrer = new Worker(worker_script)
       wokrer.postMessage(file)
-      // 监听进度
+
+      // 监听 worker 回调
       wokrer.onmessage = (e) => handleMessage(e)
     })
   }
@@ -143,7 +137,10 @@ const Send: React.FC = () => {
       {active === 3 && (
         <Dialog
           title="上传完成"
-          onCancel={() => setActive(0)}
+          onCancel={() => {
+            setActive(0)
+            setFiles([])
+          }}
           onOk={() => setActive(0)}
         >
           上传完成 你的🐎是： {code}
