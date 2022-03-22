@@ -15,6 +15,7 @@ import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
 import Dialog from '../Dialog'
 import type { MessageType } from '@/utils/worker'
+import request from '@/utils/axios'
 
 interface ParamsType {
   count: number
@@ -57,8 +58,8 @@ const Send: React.FC = () => {
       case 'start':
         console.log('开始上传')
         break
-      case 'reUpload':
-        console.log('重新上传、重试3次失败放弃')
+      case 'error':
+        console.log('失败')
         break
       case 'update':
         console.log('更新进度条')
@@ -67,6 +68,9 @@ const Send: React.FC = () => {
       case 'finish':
         console.log(data, '上传完成')
         if (++success === files.length) {
+          request.post('/api/test', {
+            message: '全部上传完成',
+          })
           console.log('全部上传完成')
         }
         break

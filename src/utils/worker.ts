@@ -1,75 +1,133 @@
-import request from '@/utils/request'
-
 export interface MessageType {
-  eventType: 'start' | 'reUpload' | 'update' | 'init' | 'finish'
+  eventType: 'start' | 'error' | 'update' | 'init' | 'finish'
   data: any
 }
 
-interface PriceListType {
-  price: Blob // 分片
-  retry: number // 重试次数
+interface RequestConfig {
+  url: string
+  method: 'GET' | 'POST'
+  data?: any
 }
 
 const workercode = () => {
+  const request = ({ method, url, data }: RequestConfig) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open(method, `http://localhost:4396${url}`, true)
+      xhr.onerror = () => {
+        console.log('onerror')
+      }
+      xhr.ontimeout = () => {
+        console.log('ontimeout')
+      }
+      // xhr.withCredentials = true
+      xhr.timeout = 30 * 1000
+      // xhr.setRequestHeader('Content-Type', 'multipart/form-data')
+      xhr.send(method === 'GET' ? null : data)
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.response)
+          } else {
+            reject(xhr.response)
+          }
+        }
+      }
+    })
+  }
+
   // 文件切片
   const sliceFile = (file: File) => {
     const { size } = file
     const chunk_size = 1024 * 1024 * 2
     const total_chunks = Math.ceil(size / chunk_size)
-    const file_chunks: PriceListType[] = []
+    const file_chunks: Blob[] = []
 
     if (size > chunk_size) {
       for (let i = 0; i < total_chunks; i++) {
         let start = i * chunk_size
         let end = (i + 1) * chunk_size
         let price = file.slice(start, end)
-        file_chunks.push({ price, retry: 0 })
+        file_chunks.push(price)
       }
     } else {
-      file_chunks.push({ price: file, retry: 0 })
+      file_chunks.push(file)
     }
     return file_chunks
   }
 
+  // 文件合并
+  const merge = (len: number, hash: string, fileName: string) => {
+    console.log(len, hash, fileName, 'marge')
+    request({
+      method: 'GET',
+      url: `/merge?length=${len}&hash=${hash}&fileName=${fileName}`,
+    })
+  }
+
   // 文件上传
-  const handSubmit = (totalPrice: PriceListType[], hash: string) => {
-    const formData = new FormData()
-    // 由于是并发，传输到服务端的顺序可能会发生变化，所以我们还需要给每个切片记录顺序
-    formData.append('hash', hash)
+  const handSubmit = async (
+    totalPrice: Blob[],
+    hash: string,
+    fileName: string
+  ) => {
     self.postMessage({
       eventType: 'start',
       data: {},
     } as MessageType)
 
-    totalPrice.forEach(({ price, retry }, index) => {
-      request
-        .post('/api/test', price)
-        .then(() => {
-          console.log('计算进度')
-        })
-        .catch(() => {
-          // 错误重传 3次内
-          const timer = setInterval(() => {
-            if (retry > 3) {
-              console.log('连接失败')
-              // 清除定时器
-              clearInterval(timer)
-            } else {
-              // 重试次数在规定内
-              console.log('重试次数', retry)
-              request
-                .post('/api/test', price)
-                .then(() => clearInterval(timer)) // 请求成功清除定时器
-                .catch(() => totalPrice[index].retry++) // 重试次数+1
-            }
-          }, 1000)
-        })
-    })
-  }
+    try {
+      const res = await Promise.all(
+        totalPrice.map(
+          (price, index) =>
+            new Promise<number>((resolve, reject) => {
+              let retry = 0
+              const formData = new FormData()
+              // 由于是并发，传输到服务端的顺序可能会发生变化，所以我们还需要给每个切片记录顺序
+              formData.append('hash', hash)
+              formData.append('index', `${index}`)
+              formData.append('price', price)
+              request({
+                method: 'POST',
+                url: '/upload',
+                data: formData,
+              })
+                .then(() => {
+                  resolve(index)
+                  // 处理上传进度
+                  console.log('计算进度')
+                })
+                .catch(() => {
+                  // 错误重传 3次内
+                  const timer = setInterval(() => {
+                    if (retry >= 3) {
+                      reject(index)
+                      // 清除定时器
+                      clearInterval(timer)
+                    } else {
+                      // 重试次数在规定内
+                      request({
+                        method: 'POST',
+                        url: '/upload',
+                        data: formData,
+                      })
+                        .then(() => clearInterval(timer)) // 请求成功清除定时器
+                        .catch(() => ++retry) // 重试次数+1
+                    }
+                  }, 1000)
+                })
+            })
+        )
+      )
 
-  // 文件合并
-  const merge = (len: number, hash: string) => {
-    console.log(len, 'marge')
+      merge(totalPrice.length, hash, fileName)
+    } catch (error) {
+      self.postMessage({
+        eventType: 'error',
+        data: [],
+      } as MessageType)
+    }
   }
 
   // 计算MD5
@@ -78,8 +136,11 @@ const workercode = () => {
   self.onmessage = (e) => {
     console.log('收到消息', e)
     // 分片文件
+    const fileName = e.data.name
+    console.log(fileName)
+
     const totalPrice = sliceFile(e.data.originFileObj)
-    handSubmit(totalPrice, '123')
+    handSubmit(totalPrice, '123', fileName)
   }
 }
 

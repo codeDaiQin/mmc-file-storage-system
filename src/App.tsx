@@ -1,7 +1,7 @@
 import React from 'react'
 import Receive from './container/receive'
 import Send from '@/components/Send'
-import logo from '../public/logo.svg'
+import logo from '/logo.svg'
 import './App.css'
 
 const App: React.FC = () => {
