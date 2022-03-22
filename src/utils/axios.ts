@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from "axios";
 import { message } from "antd";
-import { TSResponse } from "@/type";
 
 // 设置基础路径
 const baseURL = ""

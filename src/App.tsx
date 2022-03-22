@@ -14,7 +14,7 @@ const App: React.FC = () => {
         </a>
         <p>By: 毛毛虫&可乐加冰</p>
         <Send />
-        <Receive></Receive>
+        <Receive />
       </header>
     </div>
   )

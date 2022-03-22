@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import {
   Button,
   Upload,
-  Modal,
   Progress,
   List,
   Space,
@@ -14,13 +13,20 @@ import {
 } from 'antd'
 import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
+import Dialog from '../Dialog'
+import type { MessageType } from '@/utils/worker'
+
+interface ParamsType {
+  count: number
+  time: number
+}
 
 const Send: React.FC = () => {
   const [form] = Form.useForm()
   const [files, setFiles] = useState<File[]>([])
   const [active, setActive] = useState(0)
   const [percent, setPercent] = useState(0)
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState('') // 接收码
 
   // 文件改变时的回调
   const handleChange = (info: any) => {
@@ -38,32 +44,51 @@ const Send: React.FC = () => {
     return false
   }
 
-  // 上传文件的钩子
-  const handSubmit = async () => {
-    console.log('==== handSubmit ====')
+  // 监听 worker 回调
+  const handleMessage = (e: { data: MessageType }) => {
+    const { data, eventType } = e.data
+    // 成功上传的文件数量
     let success = 0
+
+    switch (eventType) {
+      case 'init':
+        console.log('初始化 分片、计算MD5')
+        break
+      case 'start':
+        console.log('开始上传')
+        break
+      case 'reUpload':
+        console.log('重新上传、重试3次失败放弃')
+        break
+      case 'update':
+        console.log('更新进度条')
+        setPercent(data)
+        break
+      case 'finish':
+        console.log(data, '上传完成')
+        if (++success === files.length) {
+          console.log('全部上传完成')
+        }
+        break
+    }
+  }
+
+  // 上传文件的钩子
+  const handleSubmit = async () => {
+    console.log('==== handSubmit ====')
     files.forEach((file) => {
       // 为每个文件创建 webwork
       const wokrer = new Worker(worker_script)
       wokrer.postMessage(file)
-
       // 监听进度
-      wokrer.onmessage = (e) => {
-        if (++success === files.length) {
-          console.log('全部上传完成')
-          // 全部上传完成 生成 唯一 接收码
-          setCode('213415')
-          setActive(3)
-        }
-        setPercent(files.length / success)
-      }
+      wokrer.onmessage = (e) => handleMessage(e)
     })
-    // setActive(3)
   }
 
   return (
-    <div>
+    <>
       <Upload
+        maxCount={10}
         multiple
         onChange={handleChange}
         showUploadList={false}
@@ -74,13 +99,10 @@ const Send: React.FC = () => {
         </Button>
       </Upload>
       {active === 1 && (
-        <Modal
-          bodyStyle={{ padding: '0 20px' }}
-          maskClosable={false}
+        <Dialog
           title="已选择的文件"
-          visible={true}
           onCancel={() => setActive(0)}
-          onOk={() => handSubmit()}
+          onOk={() => handleSubmit()}
         >
           <List
             dataSource={files}
@@ -93,7 +115,7 @@ const Send: React.FC = () => {
               </List.Item>
             )}
           />
-          <Form form={form}>
+          <Form form={form} onValuesChange={console.log}>
             <Row gutter={[24, 0]} align="middle">
               <Col span={12}>
                 <Form.Item label="下载次数" name="count">
@@ -107,30 +129,23 @@ const Send: React.FC = () => {
               </Col>
             </Row>
           </Form>
-        </Modal>
+        </Dialog>
       )}
       {active === 2 && (
-        <Modal
-          maskClosable={false}
-          title="上传中"
-          visible={true}
-          footer={false}
-        >
+        <Dialog title="上传中" footer={false}>
           <Progress percent={percent} status="active" />
-        </Modal>
+        </Dialog>
       )}
       {active === 3 && (
-        <Modal
-          maskClosable={false}
+        <Dialog
           title="上传完成"
-          visible={true}
           onCancel={() => setActive(0)}
           onOk={() => setActive(0)}
         >
           上传完成 你的🐎是： {code}
-        </Modal>
+        </Dialog>
       )}
-    </div>
+    </>
   )
 }
 
