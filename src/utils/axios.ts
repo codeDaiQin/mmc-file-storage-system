@@ -1,32 +1,29 @@
 import axios, { AxiosResponse } from "axios";
 import { message } from "antd";
+import { TSResponse } from "@/type";
 
-
-
-const MODE = import.meta.env.MODE
 // 设置基础路径
-axios.defaults.baseURL = MODE == 'development' ? '' : ''
-// 
-axios.defaults.withCredentials = true
-// 配置请求头
-// axios.defaults.headers.post["token"]= `${localStorage.getItem('token') || null}`
+const baseURL = ""
 
-axios.defaults.headers.post['Content-Type'] = 'application/json'
-axios.interceptors.response.use((res: any) => {
-  if (typeof res.result !== 'object') {
-    message.error('服务端异常')
-    return Promise.reject(res)
+const instance = axios.create({
+  baseURL: baseURL
+})
+
+instance.defaults.headers.post['Content-Type'] = 'application/json'
+
+instance.interceptors.response.use((res: AxiosResponse<any,TSResponse.Response>) => {
+  if (res.status === 500) {
+    message.error("服务端错误")
+    Promise.reject(res)
   }
-  if (res.code !== 200) {
-    if (res.data.msg) message.error(res.data.msg)
-    if (res.data.code === 401) {
-      window.location.href = '/login'
+  if (res.status !== 200 || res.data.code !== 200) {
+    if (res.data.message) message.error(res.data.message)
+    if (res.status === 401 || res.data.code === 401) {
+      // window.location.href = '/login'
     }
     return Promise.reject(res.data)
   }
   return res.data
 })
 
-export default axios
-
-
+export default instance

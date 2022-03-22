@@ -6,10 +6,6 @@
      name: string
   }
   
-  interface SendResponse {
-    
-  }
-  
   interface ReceiveResponse {
     expreiss: number
     downloadCount: number
@@ -19,6 +15,6 @@
   export interface Response {
     code: number
     message: string
-    result: ReceiveResponse | SendResponse
+    result: ReceiveResponse | boolean
   } 
 }
