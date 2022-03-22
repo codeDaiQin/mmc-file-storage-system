@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import {
   Button,
   Upload,
-  Modal,
   Progress,
   List,
   Space,
@@ -14,6 +13,7 @@ import {
 } from 'antd'
 import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
+import Dialog from '../Dialog'
 
 const Send: React.FC = () => {
   const [form] = Form.useForm()
@@ -62,7 +62,7 @@ const Send: React.FC = () => {
   }
 
   return (
-    <div>
+    <>
       <Upload
         multiple
         onChange={handleChange}
@@ -74,11 +74,8 @@ const Send: React.FC = () => {
         </Button>
       </Upload>
       {active === 1 && (
-        <Modal
-          bodyStyle={{ padding: '0 20px' }}
-          maskClosable={false}
+        <Dialog
           title="已选择的文件"
-          visible={true}
           onCancel={() => setActive(0)}
           onOk={() => handSubmit()}
         >
@@ -107,30 +104,26 @@ const Send: React.FC = () => {
               </Col>
             </Row>
           </Form>
-        </Modal>
+        </Dialog>
       )}
       {active === 2 && (
-        <Modal
-          maskClosable={false}
+        <Dialog
           title="上传中"
-          visible={true}
           footer={false}
         >
           <Progress percent={percent} status="active" />
-        </Modal>
+        </Dialog>
       )}
       {active === 3 && (
-        <Modal
-          maskClosable={false}
+        <Dialog
           title="上传完成"
-          visible={true}
           onCancel={() => setActive(0)}
           onOk={() => setActive(0)}
         >
           上传完成 你的🐎是： {code}
-        </Modal>
+        </Dialog>
       )}
-    </div>
+    </>
   )
 }
 

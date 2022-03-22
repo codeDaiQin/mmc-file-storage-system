@@ -57,9 +57,7 @@ const workercode = () => {
         self.postMessage('请求完成')
         self.close()
       })
-      .catch((i) => {
-        
-      })
+      .catch((i) => {})
     // 重试错误的请求
     //   console.log(e)
     // })
