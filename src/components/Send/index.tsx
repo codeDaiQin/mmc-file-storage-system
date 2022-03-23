@@ -10,25 +10,34 @@ import {
   Row,
   Col,
   InputNumber,
+  Modal,
+  Result,
+  Card,
 } from 'antd'
 import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
-import Dialog from '../Dialog'
 import type { MessageType } from '@/utils/worker'
 import { merge } from '@/services/file'
+import share from '@/utils/copy'
+import './index.model.css'
 
 const Send: React.FC = () => {
   const [form] = Form.useForm()
   const [files, setFiles] = useState<File[]>([])
-  const [active, setActive] = useState(0)
-  const [percent, setPercent] = useState(0)
+  const [active, setActive] = useState<0 | 1 | 2 | 3>(0)
+  const [speed, setSpeed] = useState(0)
+  const [percent, setPercent] = useState<number>(0) // 进度条
   const [code, setCode] = useState('') // 接收码
 
   // 文件改变时的回调
   const handleChange = (info: any) => {
     setFiles(info.fileList)
     setActive(1)
-    console.log('==== handleChange ====')
+    // 初始化表单
+    form.setFieldsValue({
+      count: 5,
+      time: 24,
+    })
   }
 
   // 上传文件之前的钩子
@@ -40,7 +49,11 @@ const Send: React.FC = () => {
   }
 
   // 上传文件的钩子
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
+    // 变为loading状态
+    setActive(2)
+    console.log('setactive', active)
+
     // 成功上传数量
     let success = 0
     const handleMessage = (e: { data: MessageType }) => {
@@ -57,15 +70,16 @@ const Send: React.FC = () => {
           console.log('失败')
           break
         case 'update':
-          console.log('更新进度条')
+          setSpeed(navigator.connection.downlink!)
           setPercent(data)
           break
         case 'finish':
           console.log(success, data, '上传完成')
-
           if (++success === files.length) {
-            console.log('全部上传完成')
-            merge(data).then((res) => {
+            merge({
+              ...data,
+              ...form.getFieldsValue(['count', 'time']),
+            }).then((res) => {
               setCode(res.result)
               setActive(3)
             })
@@ -73,14 +87,25 @@ const Send: React.FC = () => {
           break
       }
     }
+
     files.forEach((file) => {
       // 为每个文件创建 webwork
       const wokrer = new Worker(worker_script)
       wokrer.postMessage(file)
-
       // 监听 worker 回调
-      wokrer.onmessage = (e) => handleMessage(e)
+      wokrer.onmessage = handleMessage
     })
+  }
+
+  // 处理取消 关闭弹窗
+  const handleCancel = () => {
+    console.log('康康执行了吗')
+
+    setActive(0)
+    setFiles([])
+
+    // 取消请求
+    // 🤔
   }
 
   return (
@@ -96,55 +121,81 @@ const Send: React.FC = () => {
           发 送
         </Button>
       </Upload>
+
+      {/* 选择文件 */}
       {active === 1 && (
-        <Dialog
+        <Modal
           title="已选择的文件"
-          onCancel={() => setActive(0)}
+          bodyStyle={{ padding: 0 }}
+          maskClosable={false}
+          visible={active === 1}
+          onCancel={handleCancel}
           onOk={() => handleSubmit()}
         >
-          <List
-            dataSource={files}
-            renderItem={(item, index) => (
-              <List.Item>
-                <Space>
-                  {item.name}
-                  <Tag color="green">{size2str(item.size)}</Tag>
-                </Space>
-              </List.Item>
-            )}
-          />
-          <Form form={form} onValuesChange={console.log}>
-            <Row gutter={[24, 0]} align="middle">
-              <Col span={12}>
-                <Form.Item label="下载次数" name="count">
-                  <InputNumber min={0} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item label="保留时间" name="time">
-                  <InputNumber min={0} addonAfter="小时" />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </Dialog>
+          <Card>
+            <List
+              dataSource={files}
+              renderItem={(item, index) => (
+                <List.Item>
+                  <Space>
+                    {item.name}
+                    <Tag color="green">{size2str(item.size)}</Tag>
+                  </Space>
+                </List.Item>
+              )}
+            />
+            <Form form={form} style={{ marginTop: 20 }}>
+              <Row gutter={[24, 0]} align="middle">
+                <Col span={12}>
+                  <Form.Item label="下载次数" name="count">
+                    <InputNumber min={0} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="保留时间" name="time">
+                    <InputNumber min={0} addonAfter="小时" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Form>
+          </Card>
+        </Modal>
       )}
+
+      {/* 进度条 */}
       {active === 2 && (
-        <Dialog title="上传中" footer={false}>
-          <Progress percent={percent} status="active" />
-        </Dialog>
+        <Modal
+          title="上传中"
+          footer={false}
+          visible={true}
+          maskClosable={false}
+          onCancel={handleCancel}
+        >
+          当前下载速度{speed} MB/s
+          <Progress percent={Math.floor(percent)} status="active" />
+        </Modal>
       )}
+
+      {/* 上传完成 */}
       {active === 3 && (
-        <Dialog
+        <Modal
           title="上传完成"
-          onCancel={() => {
-            setActive(0)
-            setFiles([])
-          }}
+          visible={true}
+          maskClosable={false}
+          onCancel={handleCancel}
           onOk={() => setActive(0)}
         >
-          上传完成 你的🐎是： {code}
-        </Dialog>
+          <Result
+            style={{ padding: 0 }}
+            status="success"
+            title="上传完成 你的🐎是"
+            extra={[
+              <div className="code" onClick={() => share(code)}>
+                {code.split('').join(' ')}
+              </div>,
+            ]}
+          />
+        </Modal>
       )}
     </>
   )

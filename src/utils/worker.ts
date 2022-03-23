@@ -80,7 +80,10 @@ const workercode = () => {
               .then(() => {
                 resolve(index)
                 // 处理上传进度
-                console.log('计算进度')
+                self.postMessage({
+                  eventType: 'update',
+                  data: (index / totalPrice.length) * 100,
+                } as MessageType)
               })
               .catch(() => {
                 // 错误重传 3次内
@@ -130,7 +133,7 @@ const workercode = () => {
     const fileName = e.data.name
 
     const totalPrice = sliceFile(e.data.originFileObj)
-    handSubmit(totalPrice, '123', fileName)
+    handSubmit(totalPrice, new Date().getTime().toString(), fileName)
   }
 }
 

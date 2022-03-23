@@ -1,0 +1,10 @@
+.code {
+  font-size: 2rem;
+  text-align: center;
+  transition: all 0.5s;
+}
+
+.code:hover {
+  color: #1890ff;
+  cursor: pointer;
+}
