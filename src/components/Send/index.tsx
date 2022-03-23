@@ -11,7 +11,7 @@ import {
   Col,
   InputNumber,
 } from 'antd'
-// import worker_script from '@/utils/worker'
+import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
 import Dialog from '../Dialog'
 import type { MessageType } from '@/utils/worker'
@@ -75,7 +75,7 @@ const Send: React.FC = () => {
     }
     files.forEach((file) => {
       // 为每个文件创建 webwork
-      const wokrer = new Worker('public/worker.ts')
+      const wokrer = new Worker(worker_script)
       wokrer.postMessage(file)
 
       // 监听 worker 回调
