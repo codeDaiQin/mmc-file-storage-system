@@ -1,4 +1,4 @@
-import React, { useEffect, useImperativeHandle, useRef, useState } from "react"
+import React, { useImperativeHandle, useRef, useState } from "react"
 import { Modal } from "antd"
 import Input  from "../input"
 
@@ -8,16 +8,16 @@ interface InputRef {
 
 const ReceiveModal = React.forwardRef((props, ref) => {
   const [visible, setVisible] = useState<boolean>(false)
+  const [fileState, setFileState] = useState<boolean>(false)
   const inputRef = useRef<InputRef>()
 
   useImperativeHandle(ref, () => ({
-    close: () => {
+    open: () => {
       setVisible(true)
     }
   }))
 
   const sendFileNumber = () => {
-    console.log(123)
     console.log(inputRef.current?.getValue())
   }
 
@@ -25,6 +25,13 @@ const ReceiveModal = React.forwardRef((props, ref) => {
     setVisible(false)
   }
 
+  const renderMessage = () => {
+    return fileState  && <div>文件存在</div>
+  }
+
+  const getFileState = (state: boolean) => {
+    setFileState(state)
+  }
 
   return (
     <>
@@ -34,7 +41,12 @@ const ReceiveModal = React.forwardRef((props, ref) => {
           onOk={sendFileNumber}
           onCancel={handleClickCancel}
         >
-          <Input ref={inputRef} size={6}></Input>
+          <Input 
+            ref={inputRef} 
+            size={6}
+            onJudge={getFileState}
+          ></Input>
+          { renderMessage() }
         </Modal>
     </>
     

@@ -2,14 +2,14 @@ import React, { useRef, useState } from "react"
 import { Button } from "antd"
 import ReceiveModal from "./receiveModal"
 interface RecModal {
-  close: Function
+  open: Function
 } 
 
 const Receive = () => {
   const modal = useRef<RecModal>()
   return (
     <>
-      <Button onClick={() => {modal.current?.close()}}>接收</Button>
+      <Button onClick={() => {modal.current?.open()}}>接收</Button>
       <ReceiveModal ref={modal}></ReceiveModal>
     </>
   )
