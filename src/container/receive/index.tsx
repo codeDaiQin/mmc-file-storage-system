@@ -1,11 +1,16 @@
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import { Button } from "antd"
+import ReceiveModal from "./receiveModal"
+interface RecModal {
+  close: Function
+} 
 
 const Receive = () => {
-  const [showModel, setShowModel] = useState(false)
+  const modal = useRef<RecModal>()
   return (
     <>
-      <Button onClick={() => {setShowModel(true)}}>接收</Button>
+      <Button onClick={() => {modal.current?.close()}}>接收</Button>
+      <ReceiveModal ref={modal}></ReceiveModal>
     </>
   )
 }

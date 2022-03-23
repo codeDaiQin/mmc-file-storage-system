@@ -1,0 +1,14 @@
+.input {
+  display: flex;
+  justify-content: space-between;
+  font-size: 30px;
+}
+
+.input-item {
+  padding-left: 20px;
+  outline: none;
+  height: 50px;
+  width: 50px;
+  border: 0px;
+  border-bottom: 1px solid rgba(0, 0, 0, 1);
+}
