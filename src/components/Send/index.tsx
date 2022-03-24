@@ -22,6 +22,8 @@ import share from '@/utils/copy'
 import './index.model.css'
 import Steps from './Steps'
 
+let workerList: Function[] = []
+
 const Send: React.FC = () => {
   const [form] = Form.useForm()
   const [files, setFiles] = useState<File[]>([])
@@ -69,11 +71,17 @@ const Send: React.FC = () => {
           console.log('失败')
           break
         case 'update':
+          console.log('update')
           setSpeed(navigator.connection.downlink!)
           setPercent(data)
           break
+        case 'stop':
+          console.log('stop')
+          break
         case 'finish':
           console.log(success, data, '上传完成')
+          // 上传完成从worker队列删除
+          // workerList.splice(data.index, 1)
           if (++success === files.length) {
             merge({
               ...data,
@@ -87,12 +95,20 @@ const Send: React.FC = () => {
       }
     }
 
-    files.forEach((file) => {
+    files.forEach((file, index) => {
       // 为每个文件创建 webwork
-      const wokrer = new Worker(worker_script)
-      wokrer.postMessage(file)
+      const worker = new Worker(worker_script)
+      // 记录所有worker 方便后续取消
+
+      worker.postMessage({
+        eventType: 'start',
+        data: {
+          file,
+          index,
+        },
+      } as MessageType)
       // 监听 worker 回调
-      wokrer.onmessage = handleMessage
+      worker.onmessage = handleMessage
     })
   }
 
@@ -102,9 +118,10 @@ const Send: React.FC = () => {
 
     setActive(-1)
     setFiles([])
+    console.log(workerList)
 
     // 取消请求
-    // 🤔
+    workerList.forEach((fn) => fn())
   }
 
   const steps = [
