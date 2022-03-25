@@ -1,5 +1,5 @@
 import React,{ useEffect, useImperativeHandle, useRef, useState } from "react"
-import request from "../../../utils/request"
+import { judgeFileExist } from "../api"
 import "./index.css"
 
 interface InputProps {
@@ -36,22 +36,8 @@ const Input = React.forwardRef<any, InputProps>((props, ref) => {
       return
     }
     // 待改
-    request.get('', {
-      params: {
+     judgeFileExist({
         fileCode: values.join(''),
-      },
-    })
-    .then((res) => {
-      // 其他
-      if(!res.result) {
-        onJudge && onJudge(false)
-        return
-      }
-      onJudge && onJudge(true)
-    })
-    .catch((e) => {
-      console.log(e)
-      onJudge && onJudge(false)
     })
   }, [values])
 
@@ -80,17 +66,6 @@ const Input = React.forwardRef<any, InputProps>((props, ref) => {
     setValues(res)
   }
 
-  const deleteContent = (e: Event) => {
-    if (e.code !== "Backspace") {
-      return
-    }
-    const changeIndex =Number(e.target.dataset["index"])
-    console.log(values[changeIndex])
-    const res = values.slice()
-    res[changeIndex] = ""
-    setValues(res)
-  }
-
   const keyCode = {
     "ArrowLeft": (e: Event) => {
       const wz =Number(e.target.dataset.index)
@@ -108,6 +83,12 @@ const Input = React.forwardRef<any, InputProps>((props, ref) => {
         inputRefs.current[wz - 1].current?.setSelectionRange(-1, -1)
       })
     },
+    "Backspace": (e: Event) => {
+      const changeIndex =Number(e.target.dataset["index"])
+      const res = values.slice()
+      res[changeIndex] = ""
+      setValues(res)
+    }
   }
  
   const handlePass = (e: Event) => {
@@ -127,7 +108,6 @@ const Input = React.forwardRef<any, InputProps>((props, ref) => {
             data-index={i}
             className="input-item"
             ref={inputRefs.current[i]}
-            onKeyDown={deleteContent} 
             onChange={handleChange} 
           ></input>
         })

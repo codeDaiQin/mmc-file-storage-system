@@ -8,7 +8,7 @@ interface InputRef {
 
 const ReceiveModal = React.forwardRef((props, ref) => {
   const [visible, setVisible] = useState<boolean>(false)
-  const [fileState, setFileState] = useState<boolean>(false)
+  const [fileState, setFileState] = useState<boolean>(true)
   const inputRef = useRef<InputRef>()
 
   useImperativeHandle(ref, () => ({
@@ -26,7 +26,7 @@ const ReceiveModal = React.forwardRef((props, ref) => {
   }
 
   const renderMessage = () => {
-    return fileState  && <div>文件存在</div>
+    return !fileState  && <div>文件不存在</div>
   }
 
   const getFileState = (state: boolean) => {
