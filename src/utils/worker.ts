@@ -10,9 +10,6 @@ interface RequestConfig {
 }
 
 const workercode = () => {
-  // 暴露一个全局的请求队列  用于取消请求
-  const requestList: Function[] = []
-
   const request = ({ method, url, data }: RequestConfig) => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
@@ -36,7 +33,6 @@ const workercode = () => {
           }
         }
       }
-      requestList.push(xhr.abort)
     })
   }
 
@@ -93,7 +89,8 @@ const workercode = () => {
               // 新的切片大小等比变化
               // chunk_size = chunk_size * rate
               console.log(`大小${chunk_size / 1024 / 1024}M - 时间${time}`)
-              if (retry < 3) throw new Error()
+              // 测试错误重传
+              // if (retry < 3) throw new Error()
             })
             .catch(() => {
               if (++retry > 3) {
@@ -122,6 +119,41 @@ const workercode = () => {
       eventType: 'start',
       data: {},
     } as MessageType)
+
+    const upload = (price: Blob, index: number) => {
+      return new Promise((resolve, reject) => {
+        let retry = 0
+        const formData = new FormData()
+        // 由于是并发，传输到服务端的顺序可能会发生变化，所以我们还需要给每个切片记录顺序
+        formData.append('hash', hash)
+        formData.append('index', `${index}`)
+        formData.append('price', price)
+        request({
+          url: '/upload',
+          method: 'POST',
+          data: formData,
+        })
+          .then(() => {
+            resolve(index)
+            // 处理上传进度
+            self.postMessage({
+              eventType: 'update',
+              data: (index / totalPrice.length) * 100,
+            } as MessageType)
+          })
+          .catch((error) => {
+            // 错误重传 3次内
+            if (++retry >= 3) {
+              reject()
+            } else {
+              upload(price, index)
+            }
+          })
+      })
+    }
+
+    // upload()
+
     Promise.all(
       totalPrice.map(
         (price, index) =>
@@ -138,7 +170,6 @@ const workercode = () => {
               data: formData,
             })
               .then(() => {
-                requestList.pop()
                 resolve(index)
                 // 处理上传进度
                 self.postMessage({
@@ -161,7 +192,6 @@ const workercode = () => {
                       data: formData,
                     })
                       .then(() => {
-                        requestList.pop()
                         clearInterval(timer)
                       }) // 请求成功清除定时器
                       .catch(() => ++retry) // 重试次数+1
@@ -209,7 +239,6 @@ const workercode = () => {
         break
       case 'stop':
         console.log('停止上传')
-        requestList.forEach((fn) => fn())
         break
     }
   }

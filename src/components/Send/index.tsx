@@ -10,9 +10,7 @@ import {
   Row,
   Col,
   InputNumber,
-  Modal,
   Result,
-  Card,
 } from 'antd'
 import worker_script from '@/utils/worker'
 import size2str from '@/utils/size2str'
@@ -20,9 +18,7 @@ import type { MessageType } from '@/utils/worker'
 import { merge } from '@/services/file'
 import share from '@/utils/copy'
 import './index.model.css'
-import Steps from './Steps'
-
-let workerList: Function[] = []
+import Steps from '../Steps'
 
 const Send: React.FC = () => {
   const [form] = Form.useForm()
@@ -32,21 +28,15 @@ const Send: React.FC = () => {
   const [percent, setPercent] = useState<number>(0) // 进度条
   const [code, setCode] = useState('') // 接收码
 
-  // 文件改变时的回调
-  const handleChange = (info: any) => {
-    setFiles(info.fileList)
+  // 上传文件之前的钩子
+  const beforeUpload = (_: any, fileList: File[]) => {
+    setFiles(fileList)
     setActive(0)
     // 初始化表单
     form.setFieldsValue({
       count: 5,
       time: 24,
     })
-  }
-
-  // 上传文件之前的钩子
-  const beforeUpload = (_: any, fileList: File[]) => {
-    console.log(fileList)
-    console.log('==== beforeUpload ====')
     // 返回 false 停止上传 手动触发上传
     return false
   }
@@ -80,9 +70,17 @@ const Send: React.FC = () => {
           break
         case 'finish':
           console.log(success, data, '上传完成')
-          // 上传完成从worker队列删除
-          // workerList.splice(data.index, 1)
+
           if (++success === files.length) {
+            console.log('全部上传完成')
+            merge({
+              ...data,
+              ...form.getFieldsValue(['count', 'time']),
+            }).then((res) => {
+              setCode(res.result)
+              setActive(2)
+            })
+          } else {
             merge({
               ...data,
               ...form.getFieldsValue(['count', 'time']),
@@ -97,7 +95,7 @@ const Send: React.FC = () => {
 
     files.forEach((file, index) => {
       // 为每个文件创建 webwork
-      const worker = new Worker(worker_script)
+      const worker = new Worker('/public/worker.ts', { type: 'module' })
       // 记录所有worker 方便后续取消
 
       worker.postMessage({
@@ -118,10 +116,9 @@ const Send: React.FC = () => {
 
     setActive(-1)
     setFiles([])
-    console.log(workerList)
 
     // 取消请求
-    workerList.forEach((fn) => fn())
+    // workerList.forEach((fn) => fn())
   }
 
   const steps = [
@@ -194,7 +191,6 @@ const Send: React.FC = () => {
       <Upload
         maxCount={10}
         multiple
-        onChange={handleChange}
         showUploadList={false}
         beforeUpload={beforeUpload}
       >
