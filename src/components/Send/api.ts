@@ -7,11 +7,3 @@ export async function merge(params: {}) {
     params,
   })
 }
-
-// 上传分片
-export async function upload(data: FormData) {
-  return request<TSResponse.MergeResponse>('/upload', {
-    method: 'POST',
-    data,
-  })
-}
