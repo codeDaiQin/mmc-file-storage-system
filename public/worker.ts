@@ -52,12 +52,14 @@ const handleUpload = (price: Blob, index: number): Promise<any> => {
 }
 
 // 上传完成的回调
-const handleSuccess = (length: number, index: number) => {
+const handleSuccess = (length: number, hash: string, fileName: string) => {
+  
   self.postMessage({
     eventType: 'finish',
     data: {
-      index,
+      hash,
       length,
+      fileName,
     },
   })
 }
@@ -68,24 +70,31 @@ const handleError = (index: number) => {
 }
 
 // 生成MD5
-const createHash = (file: File) => {
-  new SparkMD5()
-  console.log('计算hash')
-}
+const createHash = (file: File) => new Promise<string>((resolve) => {
+  const fileReader = new FileReader()
+  const spark = new SparkMD5.ArrayBuffer();
+  fileReader.readAsArrayBuffer(file)
+  fileReader.onload = (e: any) => {
+    spark.append(e.target.result);
+    console.log('计算hash')
+    resolve(spark.end());
+  };
+})
 
-self.onmessage = (e: { data: MessageType }) => {
+self.onmessage = async (e: { data: MessageType }) => {
   const { eventType, data } = e.data
   switch (eventType) {
     case 'start':
       const { file, index } = data
-      const hash = createHash(file)
+      const hash = await createHash(file)
+    
 
       if (!'校验MD5') {
       } else {
         dynamicSilce(
           file,
           handleUpload,
-          (length: number) => handleSuccess(length, index),
+          (length: number) => handleSuccess(length, hash, file.name),
           () => handleError(index)
         )
       }

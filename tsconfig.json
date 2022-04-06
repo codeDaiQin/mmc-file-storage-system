@@ -21,6 +21,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["./src", "public/worker.js"],
+  "include": ["./src", "public/worker.js", "public/worker.ts"],
   "exclude": ["node_modules", "dist"]
 }
